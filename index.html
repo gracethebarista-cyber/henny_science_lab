@@ -6,18 +6,28 @@
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .form-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 25px; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
+        .form-card, .result-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 900px; }
+        h1, h3 { color: #2c3e50; text-align: center; margin-bottom: 20px; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        #materials { min-height: 150px; font-size: 15px; line-height: 1.5; }
+        #materials { min-height: 120px; font-size: 15px; }
+        
         .check-group { display: flex; justify-content: space-between; gap: 5px; background: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
-        .check-group label { font-weight: normal; background: white; padding: 8px 10px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; border: 1px solid #ddd; white-space: nowrap; font-size: 14px; }
-        .check-group input[type="checkbox"] { width: auto; margin: 0; }
-        button.submit-btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .check-group label { font-weight: normal; background: white; padding: 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; border: 1px solid #ddd; font-size: 13px; }
+        
+        button.submit-btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; }
         button.submit-btn:hover { background: #0056b3; }
         button.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* 결과 테이블 스타일 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; }
+        th { background-color: #343a40; color: white; }
+        .ready-btn { padding: 4px 8px; cursor: pointer; border-radius: 4px; border: 1px solid #28a745; background: white; color: #28a745; }
+        .ready-btn.active { background: #28a745; color: white; }
+        .delete-btn { padding: 4px 8px; cursor: pointer; border-radius: 4px; border: 1px solid #dc3545; background: white; color: #dc3545; }
+        .completed-row { background-color: #e8f5e9 !important; color: #888; text-decoration: line-through; }
     </style>
 </head>
 <body>
@@ -30,7 +40,6 @@
                 <label>날짜 및 요일</label>
                 <input type="date" id="date" required>
             </div>
-
             <div class="form-group">
                 <label>교시 선택 (중복 가능)</label>
                 <div class="check-group">
@@ -40,51 +49,69 @@
                     <label><input type="checkbox" name="period" value="5"> 5교시</label>
                 </div>
             </div>
-
             <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1;">
-                    <label>학년 반</label>
-                    <select id="gradeClass">
-                        <option>3-1</option><option>3-2</option><option>4-1</option>
-                        <option>5-1</option><option>6-1</option><option>6-2</option>
-                    </select>
-                </div>
-                <div class="form-group" style="flex:1;">
-                    <label>실험 형태</label>
-                    <select id="expType">
-                        <option>조별실험</option><option>대표실험</option>
-                    </select>
-                </div>
+                <select id="gradeClass" style="flex:1;"><option>3-1</option><option>3-2</option><option>4-1</option><option>5-1</option><option>6-1</option><option>6-2</option></select>
+                <select id="expType" style="flex:1;"><option>조별실험</option><option>대표실험</option></select>
             </div>
-
-            <div class="form-group">
+            <div class="form-group" style="margin-top:15px;">
                 <label>단원명 및 교과서 쪽수</label>
                 <input type="text" id="unitInfo" placeholder="예: 3. 물질의 상태 (50~55쪽)">
             </div>
-
             <div class="form-group">
                 <label>과학기구 및 소모품</label>
                 <textarea id="materials" placeholder="필요한 준비물을 상세히 적어주세요"></textarea>
             </div>
-
-            <div class="form-group">
-                <label>실험 조 (수량) 및 추가 요청</label>
-                <div style="display:flex; gap:10px;">
-                    <select id="groupCount" style="flex:1;">
-                        <option value="">조 선택</option>
+            <div class="form-group" style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label>실험 조</label>
+                    <select id="groupCount">
+                        <option value="">선택</option>
                         <option value="3">3조</option>
                         <option value="4">4조</option>
                     </select>
-                    <input type="text" id="extra" placeholder="기타 요청사항" style="flex:3;">
+                </div>
+                <div style="flex:3;">
+                    <label>추가 요청사항</label>
+                    <input type="text" id="extra" placeholder="기타 필요한 내용">
                 </div>
             </div>
-
             <button type="button" class="submit-btn" id="submitBtn" onclick="addRequest()">신청 등록하기 (영구저장)</button>
         </form>
+    </div>
+
+    <div class="result-card">
+        <h3>📋 최근 신청 현황 (화면 표시용)</h3>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>교시</th>
+                    <th>학년반</th>
+                    <th>단원/준비물</th>
+                    <th>준비상태</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+        <p style="font-size: 11px; color: #999; text-align: center; margin-top: 15px;">
+            * 이 목록은 브라우저에 임시 저장됩니다. 전체 원본 데이터는 연결된 구글 스프레드시트에서 확인 가능합니다.
+        </p>
     </div>
 </div>
 
 <script>
+    // 화면 표시를 위한 로컬 데이터 로드
+    let displayData = JSON.parse(localStorage.getItem('현암초_실험신청') || '[]');
+
+    window.onload = function() {
+        renderTable();
+        // 오늘 날짜 자동 설정
+        const today = new Date();
+        document.getElementById('date').value = today.toISOString().substring(0, 10);
+    };
+
     async function addRequest() {
         const submitBtn = document.getElementById('submitBtn');
         const dateValue = document.getElementById('date').value;
@@ -92,43 +119,89 @@
         const groupCount = document.getElementById('groupCount').value;
 
         if(!dateValue || !periods || !groupCount) {
-            alert("모든 항목을 입력해주세요!");
+            alert("날짜, 교시, 실험 조를 모두 선택해주세요!");
             return;
         }
 
-        // 로딩 표시
         submitBtn.disabled = true;
-        submitBtn.innerText = "저장 중... 잠시만 기다려주세요.";
+        submitBtn.innerText = "데이터 전송 중...";
 
         const entry = {
+            id: Date.now(),
             date: dateValue,
             period: periods,
             gradeClass: document.getElementById('gradeClass').value,
+            expType: document.getElementById('expType').value,
             unitInfo: document.getElementById('unitInfo').value,
             materials: document.getElementById('materials').value,
             groupCount: groupCount,
-            extra: document.getElementById('extra').value
+            extra: document.getElementById('extra').value,
+            isReady: false
         };
 
-        // ★★★ 아래 큰따옴표 안에 구글 웹 앱 URL을 붙여넣으세요 ★★★
+        // ★ 선생님이 주신 구글 웹 앱 URL ★
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwK5LdpQPNT8ctNw7JGXblUY8rJnLAXPQRTpsU3j8oyxeCVcHduI5tnnfT3k4GYbnM1bw/exec";
 
         try {
-            // fetch를 사용하여 구글 시트로 데이터 전송
+            // 1. 구글 시트로 영구 저장 전송
             await fetch(GAS_URL, {
                 method: "POST",
-                mode: "no-cors", // CORS 문제 방지
+                mode: "no-cors",
                 body: JSON.stringify(entry)
             });
 
-            alert("구글 스프레드시트에 신청 내역이 안전하게 저장되었습니다!");
-            location.reload(); // 성공 시 페이지 새로고침
-
+            // 2. 화면 표시용 데이터 업데이트 (로컬 저장)
+            displayData.unshift(entry);
+            localStorage.setItem('현암초_실험신청', JSON.stringify(displayData));
+            
+            alert("구글 스프레드시트에 신청 내역이 성공적으로 기록되었습니다!");
+            renderTable();
+            document.getElementById('expForm').reset();
+            // 날짜만 오늘로 다시 세팅
+            document.getElementById('date').value = new Date().toISOString().substring(0, 10);
+            
         } catch (e) {
             console.error(e);
-            alert("오류가 발생했습니다. URL 설정을 확인하시거나 다시 시도해주세요.");
+            alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+        } finally {
             submitBtn.disabled = false;
             submitBtn.innerText = "신청 등록하기 (영구저장)";
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        
+        displayData.forEach(item => {
+            const row = tbody.insertRow();
+            if(item.isReady) row.className = 'completed-row';
+            
+            row.innerHTML = `
+                <td>${item.date}</td>
+                <td>${item.period}</td>
+                <td>${item.gradeClass}</td>
+                <td style="text-align:left;"><strong>[${item.expType}]</strong> ${item.unitInfo}<br><small>${item.materials}</small></td>
+                <td><button class="ready-btn ${item.isReady ? 'active' : ''}" onclick="toggleReady(${item.id})">${item.isReady ? '준비완료' : '준비중'}</button></td>
+                <td><button class="delete-btn" onclick="deleteEntry(${item.id})">삭제</button></td>
+            `;
+        });
+    }
+
+    function toggleReady(id) {
+        const item = displayData.find(d => d.id === id);
+        if(item) {
+            item.isReady = !item.isReady;
+            localStorage.setItem('현암초_실험신청', JSON.stringify(displayData));
+            renderTable();
+        }
+    }
+
+    function deleteEntry(id) {
+        if(confirm("이 신청 건을 화면 목록에서만 삭제하시겠습니까?\n(구글 시트에 저장된 원본은 삭제되지 않습니다.)")) {
+            displayData = displayData.filter(d => d.id !== id);
+            localStorage.setItem('현암초_실험신청', JSON.stringify(displayData));
+            renderTable();
         }
     }
 </script>
