@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>현암초 과학실험 준비물 신청</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .form-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 25px; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        
+        /* 과학기구 입력창 크게 */
+        #materials { min-height: 150px; font-size: 15px; line-height: 1.5; }
+
+        /* 교시 선택 한 줄 배치 수정 */
+        .check-group { 
+            display: flex; 
+            justify-content:间; /* 간격 균등 배분 */
+            gap: 5px; 
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        .check-group label { 
+            font-weight: normal; 
+            background: white; 
+            padding: 8px 10px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            flex: 1; /* 가로 너비 동일하게 분할 */
+            justify-content: center;
+            border: 1px solid #ddd;
+            white-space: nowrap; /* 글자 줄바꿈 방지 */
+            font-size: 14px;
+        }
+        .check-group input[type="checkbox"] { width: auto; margin: 0; }
+        
+        button.submit-btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button.submit-btn:hover { background: #0056b3; }
+
+        /* 결과 영역 및 월별 필터 */
+        .result-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 1150px; }
+        .filter-section { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; }
+        th { background-color: #343a40; color: white; }
+        
+        /* 상태 스타일 */
+        .ready-btn { padding: 5px 10px; cursor: pointer; border-radius: 4px; border: 1px solid #28a745; background: white; color: #28a745; font-size: 12px; }
+        .ready-btn.active { background: #28a745; color: white; }
+        .delete-btn { padding: 5px 10px; cursor: pointer; border-radius: 4px; border: 1px solid #dc3545; background: white; color: #dc3545; font-size: 12px; }
+        .delete-btn:hover { background: #dc3545; color: white; }
+        .completed-row { background-color: #e8f5e9 !important; color: #888; text-decoration: line-through; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="form-card">
+        <h1>🏫 현암초 과학실험 신청</h1>
+        <form id="expForm">
+            <div class="form-group">
+                <label>날짜 및 요일</label>
+                <input type="date" id="date" required>
+            </div>
+
+            <div class="form-group">
+                <label>교시 선택 (중복 가능)</label>
+                <div class="check-group">
+                    <label><input type="checkbox" name="period" value="2"> 2교시</label>
+                    <label><input type="checkbox" name="period" value="3"> 3교시</label>
+                    <label><input type="checkbox" name="period" value="4"> 4교시</label>
+                    <label><input type="checkbox" name="period" value="5"> 5교시</label>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>학년 반</label>
+                    <select id="gradeClass">
+                        <option>3-1</option><option>3-2</option><option>4-1</option>
+                        <option>5-1</option><option>6-1</option><option>6-2</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>실험 형태</label>
+                    <select id="expType">
+                        <option>조별실험</option><option>대표실험</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>단원명 및 교과서 쪽수</label>
+                <input type="text" id="unitInfo" placeholder="예: 3. 물질의 상태 (50~55쪽)">
+            </div>
+
+            <div class="form-group">
+                <label>과학기구 및 소모품</label>
+                <textarea id="materials" placeholder="필요한 준비물을 상세히 적어주세요 (예: 비커 6개, 알코올 램프 등)"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>실험 조 (수량) 및 추가 요청</label>
+                <div style="display:flex; gap:10px;">
+                    <select id="groupCount" style="flex:1;">
+                        <option value="">조 선택</option>
+                        <option value="3">3조</option>
+                        <option value="4">4조</option>
+                    </select>
+                    <input type="text" id="extra" placeholder="기타 요청사항" style="flex:3;">
+                </div>
+            </div>
+
+            <button type="button" class="submit-btn" onclick="addRequest()">신청 등록하기</button>
+        </form>
+    </div>
+
+    <div class="result-card">
+        <h3>📋 신청 현황 목록</h3>
+        <div class="filter-section">
+            <strong>📅 월별 보기:</strong>
+            <input type="month" id="monthFilter" onchange="renderTable()">
+        </div>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>교시</th>
+                    <th>학년반</th>
+                    <th>단원/준비물</th>
+                    <th>조</th>
+                    <th>요청사항</th>
+                    <th>준비상태</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let allData = [];
+
+    function addRequest() {
+        const dateValue = document.getElementById('date').value;
+        const periods = Array.from(document.querySelectorAll('input[name="period"]:checked')).map(cb => cb.value + '교시').join(', ');
+        const groupCount = document.getElementById('groupCount').value;
+
+        if(!dateValue || !periods) {
+            alert("날짜와 교시를 반드시 선택해주세요!");
+            return;
+        }
+        if(!groupCount) {
+            alert("실험 조를 선택해주세요 (3조 또는 4조)!");
+            return;
+        }
+
+        const entry = {
+            id: Date.now(),
+            date: dateValue,
+            month: dateValue.substring(0, 7),
+            period: periods,
+            gradeClass: document.getElementById('gradeClass').value,
+            expType: document.getElementById('expType').value,
+            unitInfo: document.getElementById('unitInfo').value,
+            materials: document.getElementById('materials').value,
+            groupCount: groupCount,
+            extra: document.getElementById('extra').value,
+            isReady: false
+        };
+
+        allData.unshift(entry);
+        document.getElementById('monthFilter').value = entry.month;
+        renderTable();
+        document.getElementById('expForm').reset();
+    }
+
+    function renderTable() {
+        const filterMonth = document.getElementById('monthFilter').value;
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        const filteredData = filterMonth ? allData.filter(item => item.month === filterMonth) : allData;
+
+        filteredData.forEach(item => {
+            const row = tbody.insertRow();
+            if(item.isReady) row.className = 'completed-row';
+
+            row.innerHTML = `
+                <td>${item.date}</td>
+                <td>${item.period}</td>
+                <td>${item.gradeClass}</td>
+                <td style="text-align:left;"><strong>[${item.expType}]</strong> ${item.unitInfo}<br><small>${item.materials.replace(/\n/g, '<br>')}</small></td>
+                <td>${item.groupCount}조</td>
+                <td>${item.extra}</td>
+                <td><button class="ready-btn ${item.isReady ? 'active' : ''}" onclick="toggleReady(${item.id})">${item.isReady ? '준비완료' : '준비중'}</button></td>
+                <td><button class="delete-btn" onclick="deleteEntry(${item.id})">삭제</button></td>
+            `;
+        });
+    }
+
+    function toggleReady(id) {
+        const item = allData.find(d => d.id === id);
+        if(item) {
+            item.isReady = !item.isReady;
+            renderTable();
+        }
+    }
+
+    function deleteEntry(id) {
+        if(confirm("이 신청 내역을 삭제하시겠습니까?")) {
+            allData = allData.filter(d => d.id !== id);
+            renderTable();
+        }
+    }
+
+    window.onload = function() {
+        const today = new Date().toISOString().substring(0, 7);
+        document.getElementById('monthFilter').value = today;
+    }
+</script>
+
+</body>
+</html>
