@@ -47,4 +47,177 @@
         button.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; }
+        th { background-color: #343a40; color: white; }
+        .ready-btn { padding: 4px 8px; cursor: pointer; border-radius: 4px; border: 1px solid #28a745; background: white; color: #28a745; }
+        .ready-btn.active { background: #28a745; color: white; }
+        .delete-btn { padding: 4px 8px; cursor: pointer; border-radius: 4px; border: 1px solid #dc3545; background: white; color: #dc3545; }
+        .completed-row { background-color: #e8f5e9 !important; color: #888; text-decoration: line-through; }
+
+        /* 하단 링크 스타일 */
+        .footer-link { margin-top: 10px; text-align: center; }
+        .footer-link a { color: #007bff; text-decoration: none; font-size: 14px; font-weight: bold; border: 1px solid #007bff; padding: 8px 15px; border-radius: 20px; transition: all 0.3s; }
+        .footer-link a:hover { background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="form-card">
+        <h1>🏫 현암초 과학실험 신청</h1>
+        <form id="expForm">
+            <div class="form-group">
+                <label>날짜 및 요일</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label>교시 선택 (중복 가능)</label>
+                <div class="check-group">
+                    <label><input type="checkbox" name="period" value="2"> 2교시</label>
+                    <label><input type="checkbox" name="period" value="3"> 3교시</label>
+                    <label><input type="checkbox" name="period" value="4"> 4교시</label>
+                    <label><input type="checkbox" name="period" value="5"> 5교시</label>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <select id="gradeClass" style="flex:1;"><option>3-1</option><option>3-2</option><option>4-1</option><option>5-1</option><option>6-1</option><option>6-2</option></select>
+                <select id="expType" style="flex:1;"><option>조별실험</option><option>대표실험</option><option>개인실험</option></select>
+            </div>
+            <div class="form-group" style="margin-top:15px;">
+                <label>단원명 및 교과서 쪽수</label>
+                <input type="text" id="unitInfo" placeholder="예: 3. 물질의 상태 (50~55쪽)">
+            </div>
+            <div class="form-group">
+                <label>과학기구 및 소모품</label>
+                <textarea id="materials" placeholder="필요한 준비물을 상세히 적어주세요"></textarea>
+            </div>
+            <div class="form-group" style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label>실험 조</label>
+                    <select id="groupCount">
+                        <option value="">선택</option>
+                        <option value="3">3조</option>
+                        <option value="4">4조</option>
+                        <option value="개인별">개인별</option>
+                    </select>
+                </div>
+                <div style="flex:3;">
+                    <label>추가 요청사항</label>
+                    <input type="text" id="extra" placeholder="기타 필요한 내용">
+                </div>
+            </div>
+            <button type="button" class="submit-btn" id="submitBtn" onclick="addRequest()">신청 등록하기 (영구저장)</button>
+        </form>
+    </div>
+
+    <div class="result-card">
+        <h3>📋 최근 신청 현황 (화면 표시용)</h3>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>교시</th>
+                    <th>학년반</th>
+                    <th>단원/준비물</th>
+                    <th>준비상태</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="footer-link">
+            <a href="https://docs.google.com/spreadsheets/d/1X5X8o-p168L3_fP3F0yC46q_r4M7Y2lC_zD3z6XyU6s/edit" target="_blank">📊 구글 스프레드시트 전체 목록 보기</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    let displayData = JSON.parse(localStorage.getItem('현암초_실험신청') || '[]');
+
+    window.onload = function() {
+        renderTable();
+        document.getElementById('date').value = new Date().toISOString().substring(0, 10);
+    };
+
+    async function addRequest() {
+        const submitBtn = document.getElementById('submitBtn');
+        const dateValue = document.getElementById('date').value;
+        const periods = Array.from(document.querySelectorAll('input[name="period"]:checked')).map(cb => cb.value + '교시').join(', ');
+        const groupCount = document.getElementById('groupCount').value;
+
+        if(!dateValue || !periods || !groupCount) {
+            alert("날짜, 교시, 실험 조를 모두 선택해주세요!");
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "데이터 전송 중...";
+
+        const entry = {
+            id: Date.now(),
+            date: dateValue,
+            period: periods,
+            gradeClass: document.getElementById('gradeClass').value,
+            expType: document.getElementById('expType').value,
+            unitInfo: document.getElementById('unitInfo').value,
+            materials: document.getElementById('materials').value,
+            groupCount: groupCount,
+            extra: document.getElementById('extra').value,
+            isReady: false
+        };
+
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwK5LdpQPNT8ctNw7JGXblUY8rJnLAXPQRTpsU3j8oyxeCVcHduI5tnnfT3k4GYbnM1bw/exec";
+
+        try {
+            await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(entry) });
+            displayData.unshift(entry);
+            localStorage.setItem('현암초_실험신청', JSON.stringify(displayData));
+            alert("성공적으로 기록되었습니다!");
+            renderTable();
+            document.getElementById('expForm').reset();
+            document.getElementById('date').value = new Date().toISOString().substring(0, 10);
+        } catch (e) {
+            alert("저장 중 오류가 발생했습니다.");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "신청 등록하기 (영구저장)";
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        displayData.forEach(item => {
+            const row = tbody.insertRow();
+            if(item.isReady) row.className = 'completed-row';
+            row.innerHTML = `
+                <td>${item.date}</td>
+                <td>${item.period}</td>
+                <td>${item.gradeClass}</td>
+                <td style="text-align:left;"><strong>[${item.expType}]</strong> ${item.unitInfo}<br><small>${item.materials}</small></td>
+                <td><button class="ready-btn ${item.isReady ? 'active' : ''}" onclick="toggleReady(${item.id})">${item.isReady ? '완료' : '준비중'}</button></td>
+                <td><button class="delete-btn" onclick="deleteEntry(${item.id})">삭제</button></td>
+            `;
+        });
+    }
+
+    function toggleReady(id) {
+        const item = displayData.find(d => d.id === id);
+        if(item) {
+            item.isReady = !item.isReady;
+            localStorage.setItem('현암초_실험신청', JSON.stringify(displayData));
+            renderTable();
+        }
+    }
+
+    function deleteEntry(id) {
+        if(confirm("목록에서 삭제하시겠습니까?")) {
+            displayData = displayData.filter(d => d.id !== id);
+            localStorage.setItem('현암초_실험신청', JSON.stringify(displayData));
+            renderTable();
+        }
+    }
+</script>
+
+</body>
+</html>
